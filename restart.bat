@@ -1,14 +1,14 @@
 @echo off
-chcp 65001 >nul
-title 刷题系统 - 重启
+cd /d "%~dp0"
+title shuati-server - restart
 
 echo ============================================
-echo    📚 刷题系统 - 重启
+echo    Shuati Server - Restarting
 echo ============================================
 echo.
 
-echo 正在关闭服务...
+echo Stopping...
 call stop.bat
 echo.
-echo 正在启动服务...
+echo Starting...
 call start.bat
