@@ -7,15 +7,8 @@ echo    Shuati Server - Starting
 echo ============================================
 echo.
 
-call python convert.py
-if errorlevel 1 (
-    echo [ERROR] convert failed!
-    pause
-    exit /b 1
-)
-
 echo Starting service...
-start /B python app.py > "%TEMP%\shuati.log" 2>&1
+start /B python app.py
 timeout /t 3 /nobreak >nul
 
 echo [OK] Server started: http://localhost:5588
