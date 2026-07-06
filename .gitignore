@@ -1,0 +1,21 @@
+# Excel 题库文件
+*.xls
+*.xlsx
+
+# 临时检查/修复脚本
+check_*.py
+fix_*.py
+
+# .alita 配置
+.alita/
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# Windows 管理脚本（保留 .sh 等 Linux 脚本）
+# *.bat
+
+# 系统文件
+Thumbs.db
+.DS_Store

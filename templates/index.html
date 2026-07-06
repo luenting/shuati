@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>刷题系统</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;background:#F0F2F5;color:#1F2937;min-height:100vh;line-height:1.6;-webkit-tap-highlight-color:transparent}
+button{cursor:pointer;font-family:inherit;border:none;outline:none}
+input{font-family:inherit;outline:none;font-size:16px} /* 防止iOS自动缩放 */
+a{text-decoration:none;color:inherit}
+
+.page{display:none;max-width:800px;margin:0 auto;padding:16px 12px}
+.page.active{display:block;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Top Bar */
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.07);position:sticky;top:0;z-index:100;gap:6px}
+.top-bar h1{font-size:16px;color:#4F46E5;white-space:nowrap;flex-shrink:0}
+.top-bar .user-info{display:flex;align-items:center;gap:4px;font-size:12px;overflow:hidden}
+.top-bar .user-info .phone-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:80px;color:#6B7280}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:#4F46E5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.btn-text{background:none;color:#6B7280;font-size:12px;padding:6px 8px;border-radius:6px;white-space:nowrap}
+.btn-text:hover,.btn-text:active{background:#F3F4F6;color:#4F46E5}
+
+/* Card */
+.card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.05);margin-bottom:14px}
+.card-title{font-size:15px;font-weight:600;margin-bottom:14px;color:#374151}
+
+/* Button */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:500;transition:all .15s;min-height:42px}
+.btn-primary{background:#4F46E5;color:#fff}
+.btn-primary:active{background:#4338CA}
+.btn-success{background:#10B981;color:#fff}
+.btn-success:active{background:#059669}
+.btn-danger{background:#EF4444;color:#fff}
+.btn-danger:active{background:#DC2626}
+.btn-outline{background:#fff;color:#4F46E5;border:1.5px solid #4F46E5}
+.btn-outline:active{background:#EEF2FF}
+.btn-ghost{background:#F3F4F6;color:#374151}
+.btn-ghost:active{background:#E5E7EB}
+.btn-sm{padding:6px 12px;font-size:12px;min-height:34px}
+.btn-xs{padding:4px 8px;font-size:11px;min-height:30px}
+.btn-block{width:100%}
+.btn:disabled{opacity:.5;pointer-events:none}
+
+/* Input */
+.input-group{margin-bottom:14px}
+.input-group label{display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:5px}
+.input-group input{width:100%;padding:11px 14px;border:1.5px solid #D1D5DB;border-radius:8px;font-size:15px;transition:border-color .2s;background:#fff}
+.input-group input:focus{border-color:#4F46E5;box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+
+/* Login */
+.login-container{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#667EEA 0%,#764BA2 100%);padding:16px}
+.login-card{background:#fff;border-radius:16px;padding:32px 24px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.18)}
+.login-card h2{text-align:center;font-size:22px;margin-bottom:2px;color:#1F2937}
+.login-card .subtitle{text-align:center;color:#9CA3AF;font-size:13px;margin-bottom:24px;line-height:1.4}
+.login-tip{text-align:center;font-size:13px;color:#9CA3AF;margin-top:14px}
+.login-tip a{color:#4F46E5;cursor:pointer}
+.login-tip a:active{text-decoration:underline}
+
+/* Bank Grid */
+.bank-grid{display:grid;gap:12px}
+.bank-card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.05);cursor:pointer;transition:all .15s;border:2px solid transparent;-webkit-tap-highlight-color:transparent}
+.bank-card:active{border-color:#4F46E5;transform:translateY(-1px);box-shadow:0 4px 12px rgba(79,70,229,.12)}
+.bank-card h3{font-size:16px;margin-bottom:6px;color:#1F2937}
+.bank-card .stat{font-size:12px;color:#6B7280}
+.bank-card .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500}
+.tag-cat{background:#EEF2FF;color:#4F46E5}
+.tag-type{background:#FEF3C7;color:#D97706}
+.tag-wrong{background:#FEE2E2;color:#DC2626}
+
+/* Mode Grid */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mode-card{background:#fff;border-radius:12px;padding:16px 12px;text-align:center;cursor:pointer;transition:all .15s;border:2px solid #F3F4F6;-webkit-tap-highlight-color:transparent}
+.mode-card:active{border-color:#4F46E5;background:#EEF2FF}
+.mode-card .icon{font-size:28px;margin-bottom:6px}
+.mode-card h4{font-size:14px;margin-bottom:2px}
+.mode-card p{font-size:11px;color:#9CA3AF;line-height:1.3}
+
+.filter-list{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.filter-item{padding:8px 16px;border-radius:8px;border:1.5px solid #D1D5DB;cursor:pointer;font-size:14px;transition:all .15s;min-height:38px;display:flex;align-items:center}
+.filter-item:active{border-color:#4F46E5}
+.filter-item.active{background:#4F46E5;color:#fff;border-color:#4F46E5}
+
+/* Practice */
+.practice-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:13px;color:#6B7280;flex-wrap:wrap;gap:4px}
+.progress-bar{height:6px;background:#E5E7EB;border-radius:3px;overflow:hidden;margin-bottom:16px}
+.progress-fill{height:100%;background:#4F46E5;border-radius:3px;transition:width .3s}
+.q-meta{font-size:11px;color:#9CA3AF;margin-bottom:6px;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.q-meta .q-tag{display:inline-block;padding:1px 6px;border-radius:4px}
+.q-text{font-size:15px;line-height:1.7;margin-bottom:16px;padding:14px;background:#F9FAFB;border-radius:8px}
+
+.option-item{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1.5px solid #E5E7EB;border-radius:8px;margin-bottom:8px;cursor:pointer;transition:all .15s;min-height:44px}
+.option-item:active{border-color:#A5B4FC}
+.option-item.selected{border-color:#4F46E5;background:#EEF2FF}
+.option-item.correct{border-color:#10B981;background:#ECFDF5}
+.option-item.wrong{border-color:#EF4444;background:#FEF2F2}
+.option-item.disabled{pointer-events:none}
+.option-label{flex-shrink:0;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;border:1.5px solid #D1D5DB;transition:all .15s;margin-top:1px}
+.option-item.selected .option-label{background:#4F46E5;color:#fff;border-color:#4F46E5}
+.option-item.correct .option-label{background:#10B981;color:#fff;border-color:#10B981}
+.option-item.wrong .option-label{background:#EF4444;color:#fff;border-color:#EF4444}
+.option-text{flex:1;font-size:14px;line-height:1.5;padding-top:2px}
+
+.practice-actions{display:flex;gap:8px;margin:16px 0;flex-wrap:wrap}
+.practice-nav{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid #E5E7EB;gap:8px}
+.practice-nav .btn{flex:1}
+
+.feedback-box{padding:14px;border-radius:8px;margin-top:14px;font-size:13px;display:none;line-height:1.5}
+.feedback-box.show{display:block;animation:fadeIn .25s ease}
+.feedback-correct{background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46}
+.feedback-wrong{background:#FEF2F2;border:1px solid #FECACA;color:#991B1B}
+
+/* Results */
+.result-summary{text-align:center;padding:24px 12px}
+.result-summary .big-number{font-size:48px;font-weight:700}
+.result-summary .big-number.pass{color:#10B981}
+.result-summary .big-number.fail{color:#EF4444}
+.result-summary .label{color:#6B7280;font-size:14px;margin-top:2px}
+.result-stats{display:flex;justify-content:center;gap:24px;margin:20px 0}
+.result-stat{text-align:center}
+.result-stat .num{font-size:22px;font-weight:600}
+.result-stat .num.green{color:#10B981}
+.result-stat .num.red{color:#EF4444}
+.result-stat .desc{font-size:12px;color:#9CA3AF}
+
+.wrong-item{padding:14px;background:#FFF;border:1px solid #E5E7EB;border-radius:8px;margin-bottom:8px}
+.wrong-item .wi-q{font-size:13px;margin-bottom:6px;line-height:1.5}
+.wrong-item .wi-answer{font-size:12px}
+.wrong-item .wi-your{color:#EF4444}
+.wrong-item .wi-correct{color:#10B981}
+
+/* Chart */
+.chart-wrap{position:relative;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:8px 0}
+.chart-wrap canvas{height:260px;display:block;border-radius:8px}
+.chart-empty{text-align:center;padding:50px 20px;color:#9CA3AF;font-size:14px}
+
+/* History Table */
+.history-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.history-table{width:100%;border-collapse:collapse;font-size:12px;min-width:360px}
+.history-table th{background:#F9FAFB;padding:8px 10px;text-align:left;font-weight:600;color:#374151;border-bottom:2px solid #E5E7EB;font-size:12px}
+.history-table td{padding:8px 10px;border-bottom:1px solid #F3F4F6;color:#6B7280;font-size:12px}
+.rate-bar{display:inline-block;height:8px;border-radius:4px;min-width:4px;margin-right:6px;vertical-align:middle}
+.rate-bar.green{background:#10B981}
+.rate-bar.red{background:#EF4444}
+.rate-cell{display:flex;align-items:center;gap:4px;white-space:nowrap}
+
+/* Whitelist */
+.whitelist-input{display:flex;gap:8px;margin-bottom:14px}
+.whitelist-input input{flex:1;min-width:0}
+.whitelist-items{display:flex;flex-wrap:wrap;gap:6px}
+.whitelist-item{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:18px;background:#F3F4F6;font-size:13px}
+.whitelist-item .remove-btn{width:18px;height:18px;border-radius:50%;background:#EF4444;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;flex-shrink:0}
+
+/* Toggle */
+.toggle-wrap{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#6B7280;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.toggle{width:40px;height:22px;border-radius:11px;background:#D1D5DB;position:relative;cursor:pointer;transition:all .2s;flex-shrink:0}
+.toggle.active{background:#4F46E5}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:all .2s}
+.toggle.active::after{left:20px}
+
+/* Section Divider */
+.section-divider{height:1px;background:#E5E7EB;margin:20px 0}
+
+/* Footer empty state */
+.empty-state{text-align:center;padding:50px 20px;color:#9CA3AF;font-size:14px;line-height:1.6}
+
+/* ===== Mobile Optimizations ===== */
+@media (max-width:480px){
+  .page{padding:12px 10px}
+  .card{padding:16px;border-radius:10px;margin-bottom:12px}
+  .login-card{padding:24px 18px}
+  .top-bar{padding:6px 10px}
+  .top-bar h1{font-size:14px}
+  .top-bar .user-info .phone-text{max-width:60px;font-size:11px}
+  .mode-grid{gap:8px}
+  .mode-card{padding:12px 8px}
+  .mode-card .icon{font-size:24px}
+  .q-text{font-size:14px;padding:12px}
+  .option-text{font-size:13px}
+  .option-item{padding:10px 12px;min-height:40px}
+  .practice-nav{gap:6px}
+  .practice-nav .btn{font-size:12px;padding:8px 10px;min-height:36px}
+  .result-summary .big-number{font-size:40px}
+  .result-stats{gap:16px}
+  .result-stat .num{font-size:20px}
+  .filter-item{font-size:13px;padding:6px 14px;min-height:34px}
+  .btn{padding:8px 14px;font-size:13px;min-height:38px}
+  .chart-wrap canvas{height:220px}
+  .history-table{font-size:11px}
+  .history-table th,.history-table td{padding:6px 8px}
+  .whitelist-input{gap:6px}
+}
+
+@media (max-width:360px){
+  .top-bar .user-info .phone-text{max-width:50px}
+  .btn-text{font-size:11px;padding:4px 6px}
+  .mode-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="top-bar" id="topBar" style="display:none">
+  <h1>刷题系统</h1>
+  <div class="user-info">
+    <span class="phone-text" id="userPhone"></span>
+    <div class="user-avatar" id="userAvatar">?</div>
+    <button class="btn-text" onclick="showHistory()">成绩</button>
+    <button class="btn-text" id="adminBtn" onclick="showAdmin()" style="display:none">管理</button>
+    <button class="btn-text" onclick="logout()">退出</button>
+  </div>
+</div>
+
+<!-- Login -->
+<div class="page active" id="pageLogin">
+  <div class="login-container">
+    <div class="login-card">
+      <h2>刷题系统</h2>
+      <p class="subtitle">征信考试题库 · 练题备战</p>
+      <div class="input-group">
+        <label>柜员号</label>
+        <input type="text" id="loginPhone" placeholder="请输入柜员号" maxlength="20" inputmode="numeric">
+      </div>
+      <div class="input-group">
+        <label>密码</label>
+        <input type="password" id="loginPassword" placeholder="请输入密码" onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="doLogin()">登 录</button>
+      <div class="login-tip">还没有账号？<a onclick="showRegister()">立即注册</a></div>
+      <div id="loginError" style="color:#EF4444;font-size:13px;text-align:center;margin-top:12px;display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Register -->
+<div class="page" id="pageRegister">
+  <div class="login-container">
+    <div class="login-card">
+      <h2>注册账号</h2>
+      <p class="subtitle">白名单中的柜员号方可注册</p>
+      <div class="input-group">
+        <label>柜员号</label>
+        <input type="text" id="regPhone" placeholder="请输入柜员号" maxlength="20" inputmode="numeric" oninput="checkPhoneReg()">
+      </div>
+      <div id="regPhoneStatus" style="font-size:13px;margin-bottom:12px;display:none"></div>
+      <div class="input-group">
+        <label>设置密码</label>
+        <input type="password" id="regPassword" placeholder="至少4位密码">
+      </div>
+      <div class="input-group">
+        <label>确认密码</label>
+        <input type="password" id="regPassword2" placeholder="再次输入密码" onkeydown="if(event.key==='Enter') doRegister()">
+      </div>
+      <button class="btn btn-primary btn-block" id="regBtn" onclick="doRegister()" disabled>注 册</button>
+      <div class="login-tip">已有账号？<a onclick="showLogin()">返回登录</a></div>
+      <div id="regError" style="color:#EF4444;font-size:13px;text-align:center;margin-top:12px;display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Banks -->
+<div class="page" id="pageBanks">
+  <p style="color:#6B7280;margin-bottom:14px;font-size:13px">请选择要练习的题库</p>
+  <div class="bank-grid" id="bankList"></div>
+</div>
+
+<!-- Modes -->
+<div class="page" id="pageModes">
+  <button class="btn btn-ghost btn-xs" onclick="showPage('pageBanks')" style="margin-bottom:10px">← 返回</button>
+  <div class="card">
+    <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+  <span id="modeBankTitle">题库名称</span>
+  <span id="answeredCount" style="font-size:12px;color:#6B7280;font-weight:400">已刷: 0题</span>
+</div>
+    <p style="font-size:12px;color:#6B7280;margin-bottom:14px">选择刷题方式</p>
+    <div class="mode-grid">
+      <div class="mode-card" onclick="startPractice('all')">
+        <div class="icon">📖</div>
+        <h4>全部刷题</h4>
+        <p>练习所有题目</p>
+      </div>
+      <div class="mode-card" onclick="showCategoryFilter()">
+        <div class="icon">📂</div>
+        <h4>分类刷题</h4>
+        <p>按分类练习</p>
+      </div>
+      <div class="mode-card" onclick="showTypeFilter()">
+        <div class="icon">🏷️</div>
+        <h4>题型刷题</h4>
+        <p>按题型练习</p>
+      </div>
+      <div class="mode-card" id="wrongModeCard" onclick="startPractice('wrong')">
+        <div class="icon">❌</div>
+        <h4>错题本</h4>
+        <p>复习错题</p>
+      </div>
+    </div>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #E5E7EB">
+      <p style="font-size:12px;color:#6B7280;margin-bottom:10px">⚙️ 练习设置</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="toggle-wrap" onclick="toggleShuffle()">
+          <div class="toggle active" id="shuffleToggle"> </div>
+          <span>题目随机</span>
+        </div>
+        <div class="toggle-wrap" onclick="toggleShuffleOptions()">
+          <div class="toggle" id="shuffleOptToggle"> </div>
+          <span>选项随机</span>
+        </div>
+        <div class="toggle-wrap" onclick="toggleMemorizeMode()">
+          <div class="toggle" id="memorizeToggle"> </div>
+          <span>背题模式</span>
+        </div>
+        <div class="toggle-wrap" onclick="toggleAutoNext()">
+          <div class="toggle" id="autoNextToggle"> </div>
+          <span>答对自动下一题</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:10px">
+        <div id="wrongCount" style="font-size:12px;color:#EF4444;display:none">错题数: 0</div>
+        <button class="btn btn-danger btn-xs" id="btnClearWrong" onclick="clearWrongQuestions()" style="display:none">🗑️ 一键清空错题集</button>
+      </div>
+    </div>
+  </div>
+  <div class="card" id="filterCard" style="display:none">
+    <div class="card-title" id="filterTitle">选择分类</div>
+    <div class="filter-list" id="filterList"></div>
+    <button class="btn btn-primary btn-sm" onclick="startPracticeWithFilter()" style="margin-top:10px" disabled id="filterStartBtn">开始刷题</button>
+  </div>
+</div>
+
+<!-- Practice -->
+<div class="page" id="pagePractice">
+  <button class="btn btn-ghost btn-xs" onclick="confirmQuit()" style="margin-bottom:8px">← 退出</button>
+  <div class="practice-header">
+    <span id="practiceProgress">第 1 / 50 题</span>
+    <span id="practiceCorrectRate" style="color:#10B981">正确率: 0%</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="card question-card">
+    <div class="q-meta">
+      <span class="q-tag tag-cat" id="qCategory">A类</span>
+      <span class="q-tag tag-type" id="qType">判断题</span>
+      <span style="margin-left:auto;color:#EF4444;font-size:11px" id="qWrongStatus"></span>
+    </div>
+    <div class="q-text" id="qContent">题目标题</div>
+    <div id="qOptions"></div>
+    <div class="feedback-box" id="feedbackBox"></div>
+    <div class="practice-actions">
+      <button class="btn btn-sm btn-outline" id="btnToggleWrong" onclick="toggleWrong()">加入错题</button>
+    </div>
+    <div class="practice-nav">
+      <button class="btn btn-sm btn-ghost" id="btnPrev" onclick="prevQuestion()">← 上一题</button>
+      <button class="btn btn-sm btn-primary" id="btnSubmit" onclick="submitAnswer()">提交</button>
+      <button class="btn btn-sm btn-primary" id="btnNext" onclick="nextQuestion()" style="display:none">下一题 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Results -->
+<div class="page" id="pageResults">
+  <div class="card">
+    <div class="result-summary">
+      <div class="big-number" id="resultRate">0%</div>
+      <div class="label">正确率</div>
+    </div>
+    <div class="result-stats">
+      <div class="result-stat"><div class="num green" id="resultCorrect">0</div><div class="desc">正确</div></div>
+      <div class="result-stat"><div class="num red" id="resultWrong">0</div><div class="desc">错误</div></div>
+      <div class="result-stat"><div class="num" id="resultTotal" style="color:#4F46E5">0</div><div class="desc">总计</div></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px">
+      <button class="btn btn-primary btn-sm" onclick="showWrongReview()">回顾错题</button>
+      <button class="btn btn-outline btn-sm" onclick="showPage('pageBanks')">返回首页</button>
+    </div>
+  </div>
+  <div class="card" id="reviewCard" style="display:none">
+    <div class="card-title">错题回顾</div>
+    <div class="wrong-list" id="wrongReviewList"></div>
+  </div>
+</div>
+
+<!-- History -->
+<div class="page" id="pageHistory">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <h2 style="font-size:17px">历史成绩</h2>
+    <button class="btn btn-ghost btn-xs" onclick="showPage('pageBanks')">返回</button>
+  </div>
+  <div class="card">
+    <div class="card-title">正确率趋势</div>
+    <div class="chart-wrap" id="chartContainer">
+      <canvas id="historyChart" height="260"></canvas>
+    </div>
+    <div id="chartEmpty" class="chart-empty" style="display:none">暂无历史记录，快去刷题吧！</div>
+  </div>
+  <div class="card">
+    <div class="card-title">详细记录</div>
+    <div class="history-table-wrap">
+      <table class="history-table" id="historyTable">
+        <thead><tr><th>日期</th><th>模式</th><th>答题</th><th>正确</th><th>正确率</th></tr></thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+    </div>
+    <div id="historyEmpty" class="empty-state" style="display:none">暂无记录</div>
+  </div>
+</div>
+
+<!-- Admin Panel -->
+<div class="page" id="pageAdmin">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <h2 style="font-size:17px">管理面板</h2>
+    <button class="btn btn-ghost btn-xs" onclick="showPage('pageBanks')">返回</button>
+  </div>
+  <div class="card">
+    <div class="card-title">白名单管理</div>
+    <p style="font-size:12px;color:#6B7280;margin-bottom:14px">白名单中的柜员号才能登录系统</p>
+    <div class="whitelist-input">
+      <input type="text" id="wlPhone" placeholder="输入柜员号" maxlength="20" inputmode="numeric" onkeydown="if(event.key==='Enter') addWhitelist()">
+      <button class="btn btn-primary btn-sm" onclick="addWhitelist()">添加</button>
+    </div>
+    <div class="whitelist-items" id="whitelistItems"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">重置用户密码</div>
+    <p style="font-size:12px;color:#6B7280;margin-bottom:14px">为忘记密码的用户重置密码</p>
+    <div class="input-group">
+      <label>目标柜员号</label>
+      <input type="text" id="resetPhone" placeholder="输入要重置的柜员号" maxlength="20" inputmode="numeric">
+    </div>
+    <div class="input-group">
+      <label>新密码</label>
+      <input type="password" id="resetPassword" placeholder="新密码（至少4位）" onkeydown="if(event.key==='Enter') adminResetPassword()">
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="adminResetPassword()">重置密码</button>
+    <div id="adminMsg" style="font-size:13px;margin-top:12px;display:none"></div>
+  </div>
+</div>
+
+<script>
+const STATE = {
+  phone: '', isAdmin: false, bankName: '', bankData: null,
+  mode: 'all', filterVal: '',
+  questions: [], shuffledIds: [], currentIdx: 0,
+  answers: {}, submitted: {}, shuffleOn: true, wrongIds: [],
+  shuffleOptions: false, memorizeMode: false, autoNext: false,
+};
+const LABELS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+async function api(method, url, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  return (await fetch(url, opts)).json();
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('topBar').style.display = (id === 'pageLogin' || id === 'pageRegister') ? 'none' : 'flex';
+}
+
+const SESSION_KEY = 'shuati_session';
+function saveSession() {
+  localStorage.setItem(SESSION_KEY, JSON.stringify({
+    phone: STATE.phone, isAdmin: STATE.isAdmin,
+    expiry: Date.now() + 3600000
+  }));
+}
+function clearSession() { localStorage.removeItem(SESSION_KEY); }
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (Date.now() > s.expiry) { clearSession(); return null; }
+    return s;
+  } catch { clearSession(); return null; }
+}
+
+function showLogin() { document.getElementById('loginError').style.display = 'none'; showPage('pageLogin'); }
+function showRegister() {
+  document.getElementById('regError').style.display = 'none';
+  document.getElementById('regPhoneStatus').style.display = 'none';
+  document.getElementById('regBtn').disabled = true;
+  showPage('pageRegister');
+}
+
+async function doLogin() {
+  const phone = document.getElementById('loginPhone').value.trim();
+  const pwd = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+  if (!phone || !pwd) { errEl.textContent = '请输入柜员号和密码'; errEl.style.display = 'block'; return; }
+  const res = await api('POST', '/api/login', { phone, password: pwd });
+  if (res.success) {
+    STATE.phone = phone;
+    document.getElementById('userPhone').textContent = phone;
+    document.getElementById('userAvatar').textContent = phone.slice(-4);
+    const adminRes = await api('GET', '/api/admin/check?phone=' + phone);
+    STATE.isAdmin = adminRes.is_admin;
+    document.getElementById('adminBtn').style.display = STATE.isAdmin ? '' : 'none';
+    saveSession();
+    await loadBanks();
+    showPage('pageBanks');
+  } else { errEl.textContent = res.message; errEl.style.display = 'block'; }
+}
+
+async function checkPhoneReg() {
+  const phone = document.getElementById('regPhone').value.trim();
+  const st = document.getElementById('regPhoneStatus');
+  const btn = document.getElementById('regBtn');
+  if (!phone) { st.style.display = 'none'; btn.disabled = true; return; }
+  const res = await api('POST', '/api/check_phone', { phone });
+  if (!res.in_whitelist) {
+    st.innerHTML = '该柜员号不在白名单中'; st.style.color = '#EF4444'; st.style.display = 'block'; btn.disabled = true;
+  } else if (res.registered) {
+    st.innerHTML = '该柜员号已注册，请登录'; st.style.color = '#F59E0B'; st.style.display = 'block'; btn.disabled = true;
+  } else {
+    st.innerHTML = '该柜员号在白名单中，可以注册'; st.style.color = '#10B981'; st.style.display = 'block'; btn.disabled = false;
+  }
+}
+
+async function doRegister() {
+  const phone = document.getElementById('regPhone').value.trim();
+  const pwd = document.getElementById('regPassword').value;
+  const pwd2 = document.getElementById('regPassword2').value;
+  const err = document.getElementById('regError');
+  err.style.display = 'none';
+  if (!phone || !pwd || !pwd2) { err.textContent = '请填写完整信息'; err.style.display = 'block'; return; }
+  if (pwd !== pwd2) { err.textContent = '两次密码不一致'; err.style.display = 'block'; return; }
+  if (pwd.length < 4) { err.textContent = '密码至少4位'; err.style.display = 'block'; return; }
+  const res = await api('POST', '/api/register', { phone, password: pwd });
+  if (res.success) { alert('注册成功！请登录'); showLogin(); }
+  else { err.textContent = res.message; err.style.display = 'block'; }
+}
+
+function logout() {
+  if (!confirm('确定退出？')) return;
+  STATE.phone = ''; STATE.isAdmin = false;
+  clearSession();
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('adminBtn').style.display = 'none';
+  showPage('pageLogin');
+}
+
+async function loadBanks() {
+  const res = await api('GET', '/api/banks');
+  const c = document.getElementById('bankList'); c.innerHTML = '';
+  if (!res.success || !res.banks.length) { c.innerHTML = '<div class="empty-state">暂无题库</div>'; return; }
+  for (const bank of res.banks) {
+    const p = await api('GET', '/api/progress?phone=' + STATE.phone + '&bank=' + bank.name);
+    const wc = (p.progress?.wrong_ids || []).length;
+    const div = document.createElement('div'); div.className = 'bank-card';
+    div.innerHTML = '<h3>' + bank.name + '</h3><div class="stat">共 ' + bank.total + ' 道题</div><div class="tags">'
+      + bank.categories.map(c => '<span class="tag tag-cat">' + c.key + '类 ' + c.count + '题</span>').join('')
+      + bank.types.map(t => '<span class="tag tag-type">' + t.key + ' ' + t.count + '题</span>').join('')
+      + (wc > 0 ? '<span class="tag tag-wrong">错题 ' + wc + '题</span>' : '') + '</div>';
+    div.onclick = () => enterBank(bank.name);
+    c.appendChild(div);
+  }
+}
+
+function enterBank(bn) {
+  STATE.bankName = bn;
+  document.getElementById('modeBankTitle').textContent = bn;
+  loadWrongCount();
+  showPage('pageModes');
+}
+
+async function loadWrongCount() {
+  const r = await api('GET', '/api/progress?phone=' + STATE.phone + '&bank=' + STATE.bankName);
+  STATE.wrongIds = r.progress?.wrong_ids || [];
+  const el = document.getElementById('wrongCount');
+  const btn = document.getElementById('btnClearWrong');
+  if (STATE.wrongIds.length) { el.textContent = '错题数: ' + STATE.wrongIds.length; el.style.display = ''; btn.style.display = ''; }
+  else { el.style.display = 'none'; btn.style.display = 'none'; }
+  document.getElementById('answeredCount').textContent = '已刷: ' + (r.progress?.answered_count || 0) + '题';
+}
+
+function toggleShuffle() {
+  STATE.shuffleOn = !STATE.shuffleOn;
+  document.getElementById('shuffleToggle').classList.toggle('active', STATE.shuffleOn);
+}
+
+function toggleShuffleOptions() {
+  STATE.shuffleOptions = !STATE.shuffleOptions;
+  document.getElementById('shuffleOptToggle').classList.toggle('active', STATE.shuffleOptions);
+}
+
+function toggleMemorizeMode() {
+  STATE.memorizeMode = !STATE.memorizeMode;
+  document.getElementById('memorizeToggle').classList.toggle('active', STATE.memorizeMode);
+}
+
+function toggleAutoNext() {
+  STATE.autoNext = !STATE.autoNext;
+  document.getElementById('autoNextToggle').classList.toggle('active', STATE.autoNext);
+}
+
+async function clearWrongQuestions() {
+  if (!confirm('确定要清空当前题库的所有错题记录？此操作不可恢复！')) return;
+  const r = await api('POST', '/api/wrong/clear', { phone: STATE.phone, bank: STATE.bankName });
+  if (r.success) {
+    STATE.wrongIds = [];
+    document.getElementById('wrongCount').style.display = 'none';
+    document.getElementById('btnClearWrong').style.display = 'none';
+    document.getElementById('wrongModeCard').querySelector('p').textContent = '复习错题';
+    alert('错题集已清空');
+  }
+}
+
+function showCategoryFilter() {
+  if (!STATE.bankData) { loadBankData().then(() => showCategoryFilter()); return; }
+  const cats = [...new Set(STATE.bankData.map(q => q.category))].sort();
+  document.getElementById('filterTitle').textContent = '选择分类';
+  const list = document.getElementById('filterList'); list.innerHTML = '';
+  STATE.mode = 'category';
+  for (const cat of cats) {
+    const cnt = STATE.bankData.filter(q => q.category === cat).length;
+    const el = document.createElement('div');
+    el.className = 'filter-item'; el.textContent = cat + '类 (' + cnt + '题)'; el.dataset.value = cat;
+    el.onclick = () => {
+      list.querySelectorAll('.filter-item').forEach(e => e.classList.remove('active'));
+      el.classList.add('active'); STATE.filterVal = cat;
+      document.getElementById('filterStartBtn').disabled = false;
+    };
+    list.appendChild(el);
+  }
+  document.getElementById('filterStartBtn').disabled = true; document.getElementById('filterCard').style.display = '';
+}
+
+function showTypeFilter() {
+  if (!STATE.bankData) { loadBankData().then(() => showTypeFilter()); return; }
+  const types = [...new Set(STATE.bankData.map(q => q.type))];
+  document.getElementById('filterTitle').textContent = '选择题型';
+  const list = document.getElementById('filterList'); list.innerHTML = '';
+  STATE.mode = 'type';
+  for (const t of types) {
+    const cnt = STATE.bankData.filter(q => q.type === t).length;
+    const el = document.createElement('div');
+    el.className = 'filter-item'; el.textContent = t + ' (' + cnt + '题)'; el.dataset.value = t;
+    el.onclick = () => {
+      list.querySelectorAll('.filter-item').forEach(e => e.classList.remove('active'));
+      el.classList.add('active'); STATE.filterVal = t;
+      document.getElementById('filterStartBtn').disabled = false;
+    };
+    list.appendChild(el);
+  }
+  document.getElementById('filterStartBtn').disabled = true; document.getElementById('filterCard').style.display = '';
+}
+
+async function startPractice(m) { STATE.mode = m; STATE.filterVal = ''; document.getElementById('filterCard').style.display = 'none'; await startSession(); }
+async function startPracticeWithFilter() { document.getElementById('filterCard').style.display = 'none'; await startSession(); }
+
+async function startSession() {
+  if (!STATE.bankData) await loadBankData();
+  const res = await api('GET', '/api/questions?bank=' + STATE.bankName + '&mode=' + STATE.mode + '&filter=' + STATE.filterVal + '&phone=' + STATE.phone + '&shuffle=' + STATE.shuffleOn);
+  if (!res.success) { alert(res.message); return; }
+  STATE.questions = res.questions;
+  if (STATE.shuffleOptions) STATE.questions.forEach(q => {
+    const idx = q.options.map((_, i) => i);
+    for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+    q._optOrder = idx;
+  });
+  STATE.shuffledIds = STATE.questions.map(q => q.id);
+  STATE.currentIdx = 0; STATE.answers = {}; STATE.submitted = {};
+  const p = await api('GET', '/api/progress?phone=' + STATE.phone + '&bank=' + STATE.bankName);
+  const sk = STATE.mode + (STATE.filterVal ? '_' + STATE.filterVal : '');
+  const ss = p.progress?.sessions?.[sk];
+  if (ss && ss.shuffledIds && JSON.stringify([...ss.shuffledIds].sort()) === JSON.stringify([...STATE.shuffledIds].sort()) && confirm('检测到上次进度，是否继续？\n确定=继续上次进度\n取消=重新开始')) {
+    STATE.shuffledIds = ss.shuffledIds; STATE.currentIdx = ss.currentIndex || 0;
+    STATE.answers = ss.answers || {}; STATE.submitted = ss.submitted || {};
+  }
+  showPage('pagePractice'); renderQuestion();
+}
+
+async function loadBankData() {
+  const r = await api('GET', '/api/questions?bank=' + STATE.bankName + '&mode=all');
+  if (r.success) STATE.bankData = r.questions;
+  return STATE.bankData;
+}
+
+function renderQuestion() {
+  if (!STATE.questions.length) return;
+  const idx = STATE.currentIdx, qId = STATE.shuffledIds[idx];
+  const q = STATE.questions.find(x => x.id === qId); if (!q) return;
+  const total = STATE.shuffledIds.length;
+  document.getElementById('practiceProgress').textContent = '第 ' + (idx + 1) + ' / ' + total + ' 题';
+  document.getElementById('progressFill').style.width = (idx / total) * 100 + '%';
+  document.getElementById('qCategory').textContent = q.category + '类';
+  document.getElementById('qType').textContent = q.type;
+  const iw = STATE.wrongIds.includes(q.id);
+  document.getElementById('qWrongStatus').textContent = iw ? '已在错题集' : '';
+  document.getElementById('btnToggleWrong').textContent = iw ? '移出错题集' : '加入错题';
+  document.getElementById('qContent').textContent = q.content;
+  if (STATE.memorizeMode && !STATE.submitted[q.id]) {
+    STATE.answers[q.id] = [...q.answer];
+    STATE.submitted[q.id] = true;
+  }
+  const oc = document.getElementById('qOptions'); oc.innerHTML = '';
+  const im = q.type === '多选题', is = STATE.submitted[q.id] || false, sl = STATE.answers[q.id] || [];
+  const order = q._optOrder || q.options.map((_, i) => i);
+  order.forEach((oi, di) => {
+    const opt = q.options[oi];
+    const d = document.createElement('div');
+    d.className = 'option-item' + (is ? ' disabled' : '') + (sl.includes(oi) && !is ? ' selected' : '');
+    if (is) {
+      if (sl.includes(oi) && q.answer.includes(oi)) d.classList.add('correct');
+      else if (sl.includes(oi)) d.classList.add('wrong');
+      else if (q.answer.includes(oi)) d.classList.add('correct');
+    }
+    d.innerHTML = '<div class="option-label">' + (LABELS[di]||di) + '</div><div class="option-text">' + opt + '</div>';
+    d.onclick = () => {
+      if (is) return;
+      if (im) { const a = STATE.answers[q.id]||[]; const p = a.indexOf(oi); p>-1 ? a.splice(p,1) : a.push(oi); STATE.answers[q.id]=a; }
+      else STATE.answers[q.id] = [oi];
+      renderQuestion();
+    };
+    oc.appendChild(d);
+  });
+  const fb = document.getElementById('feedbackBox'); fb.classList.remove('show','feedback-correct','feedback-wrong');
+  if (is) {
+    const ck = checkAnswer(q);
+    fb.className = 'feedback-box show ' + (ck ? 'feedback-correct' : 'feedback-wrong');
+    fb.textContent = ck ? '回答正确！' : '回答错误！正确答案：' + q.answer_text;
+  }
+  document.getElementById('btnSubmit').style.display = is ? 'none' : '';
+  document.getElementById('btnNext').style.display = is ? '' : 'none';
+  document.getElementById('btnPrev').style.display = idx > 0 ? '' : 'none';
+  updateCorrectRate(); saveProgress();
+}
+
+function checkAnswer(q) {
+  const s = STATE.answers[q.id]||[], c = q.answer;
+  return s.length === c.length && s.every(x => c.includes(x));
+}
+
+function updateCorrectRate() {
+  let c=0,t=0;
+  STATE.questions.forEach(q => { if (STATE.submitted[q.id]) { t++; if (checkAnswer(q)) c++; } });
+  const r = t ? Math.round(c/t*100) : 0;
+  document.getElementById('practiceCorrectRate').textContent = '正确率: ' + r + '% (' + c + '/' + t + ')';
+}
+
+function submitAnswer() {
+  const qId = STATE.shuffledIds[STATE.currentIdx], q = STATE.questions.find(x => x.id === qId);
+  const s = STATE.answers[q.id]||[];
+  if (!s.length) { alert('请先选择一个答案'); return; }
+  STATE.submitted[q.id] = true;
+  const correct = checkAnswer(q);
+  if (!correct) addToWrongSet(q.id);
+  renderQuestion();
+  if (correct && STATE.autoNext) setTimeout(nextQuestion, 800);
+}
+
+function nextQuestion() {
+  STATE.currentIdx < STATE.shuffledIds.length - 1 ? (STATE.currentIdx++, renderQuestion()) : finishPractice();
+}
+function prevQuestion() { if (STATE.currentIdx > 0) { STATE.currentIdx--; renderQuestion(); } }
+function confirmQuit() { saveProgress(); showPage('pageModes'); }
+
+function finishPractice() {
+  let c=0,t=0; const ws=[];
+  STATE.questions.forEach(q => {
+    if (STATE.submitted[q.id]) { t++; if (checkAnswer(q)) c++; else ws.push(q); }
+  });
+  const r = t ? Math.round(c/t*100) : 0;
+  api('POST', '/api/progress/history', { phone: STATE.phone, bank: STATE.bankName, record: { date: new Date().toISOString().slice(0,10), mode: STATE.mode+(STATE.filterVal?'_'+STATE.filterVal:''), total: t, correct: c, rate: r } });
+  document.getElementById('resultRate').textContent = r + '%';
+  document.getElementById('resultRate').className = 'big-number ' + (r >= 60 ? 'pass' : 'fail');
+  document.getElementById('resultCorrect').textContent = c;
+  document.getElementById('resultWrong').textContent = t - c;
+  document.getElementById('resultTotal').textContent = t;
+  document.getElementById('reviewCard').style.display = 'none';
+  STATE._wrongInSession = ws; showPage('pageResults');
+}
+
+function showWrongReview() {
+  const list = STATE._wrongInSession || [];
+  const c = document.getElementById('wrongReviewList'); c.innerHTML = '';
+  if (!list.length) c.innerHTML = '<p style="color:#10B981;text-align:center">全部答对，没有错题！</p>';
+  else list.forEach(q => {
+    const s = STATE.answers[q.id]||[], ya = s.map(i => LABELS[i]||i).join('、') || '未作答';
+    c.innerHTML += '<div class="wrong-item"><div class="wi-q">' + q.content + '</div><div class="wi-answer"><span class="wi-your">你的答案: ' + ya + '</span></div><div class="wi-answer"><span class="wi-correct">正确答案: ' + q.answer_text + '</span></div></div>';
+  });
+  document.getElementById('reviewCard').style.display = ''; document.getElementById('reviewCard').scrollIntoView({behavior:'smooth'});
+}
+
+async function addToWrongSet(qId) {
+  if (!STATE.wrongIds.includes(qId)) { await api('POST', '/api/wrong/add', { phone: STATE.phone, bank: STATE.bankName, question_id: qId }); STATE.wrongIds.push(qId); }
+}
+async function toggleWrong() {
+  const qId = STATE.shuffledIds[STATE.currentIdx];
+  if (STATE.wrongIds.includes(qId)) { await api('POST', '/api/wrong/remove', { phone: STATE.phone, bank: STATE.bankName, question_id: qId }); STATE.wrongIds = STATE.wrongIds.filter(id => id !== qId); }
+  else { await api('POST', '/api/wrong/add', { phone: STATE.phone, bank: STATE.bankName, question_id: qId }); STATE.wrongIds.push(qId); }
+  renderQuestion();
+}
+
+function saveProgress() {
+  const sk = STATE.mode + (STATE.filterVal ? '_' + STATE.filterVal : '');
+  api('POST', '/api/progress/save', { phone: STATE.phone, bank: STATE.bankName, session: { [sk]: { shuffledIds: STATE.shuffledIds, currentIndex: STATE.currentIdx, answers: STATE.answers, submitted: STATE.submitted } } });
+}
+
+async function showHistory() {
+  const res = await api('GET', '/api/history?phone=' + STATE.phone + '&bank=' + STATE.bankName);
+  const h = res.history || [];
+  document.getElementById('chartEmpty').style.display = h.length ? 'none' : '';
+  document.getElementById('historyChart').style.display = h.length ? '' : 'none';
+  document.getElementById('historyEmpty').style.display = h.length ? 'none' : '';
+  const tb = document.getElementById('historyBody');
+  if (h.length) {
+    renderChart(document.getElementById('historyChart'), h);
+    tb.innerHTML = h.map(x => {
+      const rc = x.rate >= 60 ? 'green' : 'red', bw = Math.max(x.rate, 4);
+      return '<tr><td>' + x.date + '</td><td>' + (x.mode||'-') + '</td><td>' + x.total + '</td><td>' + x.correct + '</td><td><div class="rate-cell"><span class="rate-bar ' + rc + '" style="width:' + bw + 'px"></span>' + x.rate + '%</div></td></tr>';
+    }).join('');
+  } else tb.innerHTML = '';
+  showPage('pageHistory');
+}
+
+function renderChart(cvs, history) {
+  const ctx = cvs.getContext('2d');
+  const parent = cvs.parentElement;
+  cvs.width = Math.max(parent.clientWidth, 320);
+  cvs.height = 260;
+  const W = cvs.width, H = cvs.height, pad = {top:25,right:20,bottom:40,left:45}, cw = W-pad.left-pad.right, ch = H-pad.top-pad.bottom;
+  ctx.clearRect(0,0,W,H);
+  const n = history.length;
+  if (!n) return;
+  ctx.strokeStyle = '#F0F0F0'; ctx.lineWidth = 1;
+  for (let p = 0; p <= 100; p += 20) { const y = pad.top + ch - (p/100)*ch; ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke(); ctx.fillStyle='#9CA3AF'; ctx.font='10px sans-serif'; ctx.textAlign='right'; ctx.fillText(p+'%', pad.left-6, y+3); }
+  const py = pad.top + ch - 0.6*ch;
+  ctx.strokeStyle = '#FCA5A5'; ctx.lineWidth = 1.5; ctx.setLineDash([5,3]);
+  ctx.beginPath(); ctx.moveTo(pad.left,py); ctx.lineTo(W-pad.right,py); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='#EF4444'; ctx.font='9px sans-serif'; ctx.textAlign='left'; ctx.fillText('及格线60%', W-pad.right-72, py-4);
+  const pts = history.map((h,i) => ({ x: pad.left + (i/Math.max(n-1,1))*cw, y: pad.top + ch - (h.rate/100)*ch, rate: h.rate, date: h.date }));
+  ctx.beginPath(); ctx.strokeStyle = '#4F46E5'; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
+  ctx.moveTo(pts[0].x, pts[0].y); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y); ctx.stroke();
+  const grad = ctx.createLinearGradient(0,pad.top,0,H-pad.bottom); grad.addColorStop(0,'rgba(79,70,229,0.12)'); grad.addColorStop(1,'rgba(79,70,229,0.01)');
+  ctx.beginPath(); ctx.moveTo(pts[0].x,pad.top+ch); for (let i=0;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y); ctx.lineTo(pts[n-1].x,pad.top+ch); ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+  pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x,p.y,4,0,Math.PI*2); ctx.fillStyle = p.rate>=60 ? '#10B981' : '#EF4444'; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke(); });
+  ctx.fillStyle='#9CA3AF'; ctx.font='9px sans-serif'; ctx.textAlign='center';
+  const step = Math.max(1, Math.floor(n/6));
+  pts.forEach((p,i) => { if (i===0||i===n-1||i%step===0) ctx.fillText(p.date.slice(5), p.x, H-8); });
+}
+
+async function showAdmin() {
+  if (!STATE.isAdmin) { alert('无管理员权限'); return; }
+  await refreshWhitelist(); document.getElementById('adminMsg').style.display = 'none'; showPage('pageAdmin');
+}
+async function refreshWhitelist() {
+  const res = await api('GET', '/api/whitelist?phone=' + STATE.phone);
+  const c = document.getElementById('whitelistItems'); c.innerHTML = '';
+  if (!res.success || !res.whitelist) return;
+  res.whitelist.forEach(p => { const d = document.createElement('div'); d.className = 'whitelist-item'; d.innerHTML = '<span>' + p + '</span><button class="remove-btn" onclick="removeWhitelist(\'' + p + '\')">✕</button>'; c.appendChild(d); });
+}
+async function addWhitelist() {
+  const p = document.getElementById('wlPhone').value.trim();
+  if (!p) { alert('请输入柜员号'); return; }
+  const r = await api('POST', '/api/whitelist', { admin_phone: STATE.phone, phone: p, action: 'add' });
+  if (r.success) { document.getElementById('wlPhone').value = ''; await refreshWhitelist(); } else alert(r.message);
+}
+async function removeWhitelist(p) {
+  if (!confirm('确定移除 ' + p + '？')) return;
+  const r = await api('POST', '/api/whitelist', { admin_phone: STATE.phone, phone: p, action: 'remove' });
+  if (r.success) await refreshWhitelist();
+}
+async function adminResetPassword() {
+  const tp = document.getElementById('resetPhone').value.trim(), np = document.getElementById('resetPassword').value;
+  const m = document.getElementById('adminMsg'); m.style.display = 'none';
+  if (!tp || !np) { m.textContent = '请填写完整信息'; m.style.color='#EF4444'; m.style.display=''; return; }
+  const r = await api('POST', '/api/admin/reset_password', { admin_phone: STATE.phone, target_phone: tp, new_password: np });
+  m.textContent = r.message; m.style.color = r.success ? '#10B981' : '#EF4444'; m.style.display = '';
+  if (r.success) { document.getElementById('resetPhone').value=''; document.getElementById('resetPassword').value=''; }
+}
+
+document.getElementById('shuffleToggle').classList.add('active');
+
+(async function initSession() {
+  const s = loadSession();
+  if (s) {
+    STATE.phone = s.phone;
+    STATE.isAdmin = s.isAdmin;
+    document.getElementById('userPhone').textContent = s.phone;
+    document.getElementById('userAvatar').textContent = s.phone.slice(-4);
+    document.getElementById('adminBtn').style.display = s.isAdmin ? '' : 'none';
+    await loadBanks();
+    showPage('pageBanks');
+  }
+})();
+</script>
+</body>
+</html>
