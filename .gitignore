@@ -16,6 +16,9 @@ __pycache__/
 # Windows 管理脚本（保留 .sh 等 Linux 脚本）
 # *.bat
 
+# 数据库文件（首次运行自动生成）
+data/shuati.db
+
 # 系统文件
 Thumbs.db
 .DS_Store
